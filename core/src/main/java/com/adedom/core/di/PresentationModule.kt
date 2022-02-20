@@ -11,5 +11,5 @@ val presentationModule = DI.Module(name = "presentation") {
 
     bindProvider { MainFlow(instance()) }
     bindProvider { SplashScreenFlow() }
-    bindProvider { LoginFlow() }
+    bindProvider { LoginFlow(instance()) }
 }

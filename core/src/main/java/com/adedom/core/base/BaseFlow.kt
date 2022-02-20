@@ -1,5 +1,6 @@
 package com.adedom.core.base
 
+import com.adedom.core.data.models.response.base.BaseError
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.CoroutineContext
@@ -9,7 +10,9 @@ abstract class BaseFlow<S : Any, A : Any>(initialUiState: S) : CoroutineScope {
     private val job = SupervisorJob()
     private val exceptionHandler = CoroutineExceptionHandler { _, error ->
         error.printStackTrace()
-        setError(error)
+        val messageString = error.message ?: "Error"
+        val baseError = BaseError(message = messageString)
+        setError(baseError)
     }
 
     private val _viewState = MutableStateFlow(initialUiState)
@@ -18,8 +21,8 @@ abstract class BaseFlow<S : Any, A : Any>(initialUiState: S) : CoroutineScope {
     private val _viewAction = MutableSharedFlow<A>()
     val viewAction: SharedFlow<A> = _viewAction.asSharedFlow()
 
-    private val _error = MutableStateFlow<Throwable?>(null)
-    val error: StateFlow<Throwable?> = _error
+    private val _error = MutableStateFlow<BaseError?>(null)
+    val error: StateFlow<BaseError?> = _error
 
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main + exceptionHandler
@@ -46,7 +49,7 @@ abstract class BaseFlow<S : Any, A : Any>(initialUiState: S) : CoroutineScope {
         }
     }
 
-    protected fun setError(error: Throwable) {
+    protected fun setError(error: BaseError) {
         _error.value = error
     }
 }

@@ -1,13 +1,16 @@
 package com.adedom.core.presentation.login.flow
 
 import com.adedom.core.base.BaseFlow
+import com.adedom.core.data.repositories.Resource
+import com.adedom.core.domain.usecase.login.LoginUseCase
 import com.adedom.core.presentation.login.action.LoginViewAction
 import com.adedom.core.presentation.login.state.LoginViewState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-class LoginFlow : BaseFlow<LoginViewState, LoginViewAction>(LoginViewState()) {
+class LoginFlow(
+    private val useCase: LoginUseCase,
+) : BaseFlow<LoginViewState, LoginViewAction>(LoginViewState()) {
 
     init {
         viewAction
@@ -55,6 +58,18 @@ class LoginFlow : BaseFlow<LoginViewState, LoginViewAction>(LoginViewState()) {
     }
 
     private suspend fun callLogin() {
-        delay(2_000L)
+        val username = viewState.value.username
+        val password = viewState.value.password
+        val resource = useCase(username, password)
+        when (resource) {
+            is Resource.Success -> {
+                setState {
+                    copy(loginSuccess = resource.data)
+                }
+            }
+            is Resource.Error -> {
+                setError(resource.error)
+            }
+        }
     }
 }
