@@ -25,6 +25,7 @@ fun AppCompose() {
         ) {
             composable("splash_screen") {
                 SplashScreenCompose {
+                    navController.popBackStack()
                     navController.navigate("login")
                 }
             }
