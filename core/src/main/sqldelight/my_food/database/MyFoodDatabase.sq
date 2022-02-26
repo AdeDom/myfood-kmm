@@ -1,0 +1,25 @@
+CREATE TABLE MyFoodEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    food TEXT NOT NULL
+);
+
+getMyFoodById:
+SELECT *
+FROM MyFoodEntity
+WHERE id = :id;
+
+getMyFoodAll:
+SELECT *
+FROM MyFoodEntity;
+
+insertMyFood:
+INSERT OR REPLACE
+INTO MyFoodEntity
+VALUES(?, ?);
+
+deleteMyFoodById:
+DELETE FROM MyFoodEntity
+WHERE id = :id;
+
+deleteMyFoodAll:
+DELETE FROM MyFoodEntity;
