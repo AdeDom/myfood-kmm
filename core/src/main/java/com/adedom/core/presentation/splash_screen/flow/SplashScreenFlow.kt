@@ -7,9 +7,11 @@ import com.adedom.core.domain.usecase.test_db.TestDatabaseUseCase
 import com.adedom.core.presentation.splash_screen.action.SplashScreenViewAction
 import com.adedom.core.presentation.splash_screen.state.SplashScreenViewState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import myfood.database.MyFoodEntity
 
 class SplashScreenFlow(
     private val testAuthUseCase: TestAuthUseCase,
@@ -35,12 +37,23 @@ class SplashScreenFlow(
                     SplashScreenViewAction.OnClickInsertMyFood -> {
                         insertMyFood()
                     }
+                    SplashScreenViewAction.OnClickDeleteMyFood -> {
+                        deleteMyFood()
+                    }
                 }
             }
             .launchIn(this)
 
         val action = SplashScreenViewAction.Initial
         setAction(action)
+
+        testDatabaseUseCase.getMyFoodAll()
+            .onEach {
+                setState {
+                    copy(myFoods = it)
+                }
+            }
+            .launchIn(this)
     }
 
     fun setOnClickTestAuthAction() {
@@ -59,16 +72,33 @@ class SplashScreenFlow(
         }
     }
 
-    private suspend fun callTestAuth() {
-        val resource = testAuthUseCase()
-        when (resource) {
-            is Resource.Success -> {
-                setState {
-                    copy(isFinish = true)
+    fun setOnClickDeleteMyFoodAction() {
+        val action = SplashScreenViewAction.OnClickDeleteMyFood
+        setAction(action)
+    }
+
+    private fun deleteMyFood() {
+        launch {
+            testDatabaseUseCase.deleteMyFoodAll()
+        }
+    }
+
+    fun getMyFoodAll(): Flow<List<MyFoodEntity>> {
+        return testDatabaseUseCase.getMyFoodAll()
+    }
+
+    private fun callTestAuth() {
+        launch {
+            val resource = testAuthUseCase()
+            when (resource) {
+                is Resource.Success -> {
+                    setState {
+                        copy(isFinish = true)
+                    }
                 }
-            }
-            is Resource.Error -> {
-                setError(resource.error)
+                is Resource.Error -> {
+                    setError(resource.error)
+                }
             }
         }
     }

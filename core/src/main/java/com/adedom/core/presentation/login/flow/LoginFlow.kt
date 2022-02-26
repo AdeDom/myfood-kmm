@@ -7,6 +7,7 @@ import com.adedom.core.presentation.login.action.LoginViewAction
 import com.adedom.core.presentation.login.state.LoginViewState
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 class LoginFlow(
     private val useCase: LoginUseCase,
@@ -57,18 +58,20 @@ class LoginFlow(
         setAction(action)
     }
 
-    private suspend fun callLogin() {
-        val username = viewState.value.username
-        val password = viewState.value.password
-        val resource = useCase(username, password)
-        when (resource) {
-            is Resource.Success -> {
-                setState {
-                    copy(loginSuccess = resource.data)
+    private fun callLogin() {
+        launch {
+            val username = viewState.value.username
+            val password = viewState.value.password
+            val resource = useCase(username, password)
+            when (resource) {
+                is Resource.Success -> {
+                    setState {
+                        copy(loginSuccess = resource.data)
+                    }
                 }
-            }
-            is Resource.Error -> {
-                setError(resource.error)
+                is Resource.Error -> {
+                    setError(resource.error)
+                }
             }
         }
     }

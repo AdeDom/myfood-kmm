@@ -4,4 +4,5 @@ sealed class SplashScreenViewAction {
     object Initial : SplashScreenViewAction()
     object OnClickTestAuth : SplashScreenViewAction()
     object OnClickInsertMyFood : SplashScreenViewAction()
+    object OnClickDeleteMyFood : SplashScreenViewAction()
 }
