@@ -1,6 +1,7 @@
 package com.adedom.core.data.resource.remote
 
 import com.adedom.core.data.resource.interceptor.ApiServiceManagerInterceptor
+import com.adedom.core.data.store.AppStore
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.features.*
@@ -9,6 +10,7 @@ import io.ktor.client.features.json.serializer.*
 import io.ktor.client.features.logging.*
 
 class DataSourceProvider(
+    private val store: AppStore,
     private val apiServiceManagerInterceptor: ApiServiceManagerInterceptor,
 ) {
 
@@ -20,6 +22,15 @@ class DataSourceProvider(
         return HttpClient(OkHttp) {
             engine {
                 addInterceptor(apiServiceManagerInterceptor)
+                if (dataSourceType == DataSourceType.AUTHORIZATION) {
+                    addInterceptor { chain ->
+                        val request = chain.request()
+                            .newBuilder()
+                            .addHeader("my-food-key", store.accessToken.orEmpty())
+                            .build()
+                        chain.proceed(request)
+                    }
+                }
             }
 
             install(JsonFeature) {
