@@ -91,13 +91,13 @@ class ApiServiceManagerInterceptor(
         }
     }
 
-    private fun callRefreshToken(baseError: BaseError?, chain: Interceptor.Chain): Response {
+    private fun callRefreshToken(baseError: BaseError, chain: Interceptor.Chain): Response {
         val tokenRequest = TokenRequest(
             accessToken = appStore.accessToken,
             refreshToken = appStore.refreshToken,
         )
 
-        val tokenResponse: BaseResponse<TokenResponse>? = runBlocking {
+        val tokenResponse: BaseResponse<TokenResponse> = runBlocking {
             try {
                 getHttpClient()
                     .post("https://myfood-server.herokuapp.com/api/auth/refreshtoken") {
@@ -115,15 +115,15 @@ class ApiServiceManagerInterceptor(
             }
         }
 
-        return if (tokenResponse?.status == ResponseKeyConstant.SUCCESS) {
+        return if (tokenResponse.status == ResponseKeyConstant.SUCCESS) {
             val accessToken = tokenResponse.result?.accessToken
             val refreshToken = tokenResponse.result?.refreshToken
             appStore.accessToken = accessToken
             appStore.refreshToken = refreshToken
             intercept(chain)
         } else {
-            val baseError = tokenResponse?.error
-            val jsonString = Json.encodeToString(baseError)
+            val error = tokenResponse.error
+            val jsonString = Json.encodeToString(error)
             throw ApiServiceManagerException(jsonString)
         }
     }
