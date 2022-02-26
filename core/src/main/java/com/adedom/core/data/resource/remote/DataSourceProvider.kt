@@ -1,5 +1,6 @@
 package com.adedom.core.data.resource.remote
 
+import com.adedom.core.data.resource.interceptor.ApiServiceManagerInterceptor
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.features.*
@@ -7,7 +8,9 @@ import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.features.logging.*
 
-class DataSourceProvider {
+class DataSourceProvider(
+    private val apiServiceManagerInterceptor: ApiServiceManagerInterceptor,
+) {
 
     fun getBaseUrl(): String {
         return "https://myfood-server.herokuapp.com/"
@@ -15,6 +18,10 @@ class DataSourceProvider {
 
     fun getHttpClient(dataSourceType: DataSourceType): HttpClient {
         return HttpClient(OkHttp) {
+            engine {
+                addInterceptor(apiServiceManagerInterceptor)
+            }
+
             install(JsonFeature) {
                 serializer = KotlinxSerializer()
             }
