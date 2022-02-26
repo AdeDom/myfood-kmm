@@ -8,6 +8,6 @@ import org.kodein.di.instance
 
 val presentationModule = DI.Module(name = "presentation") {
 
-    bindProvider { SplashScreenFlow() }
+    bindProvider { SplashScreenFlow(instance()) }
     bindProvider { LoginFlow(instance()) }
 }

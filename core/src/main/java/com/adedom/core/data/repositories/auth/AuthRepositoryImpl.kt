@@ -11,6 +11,19 @@ class AuthRepositoryImpl(
     private val authRemoteDataSource: AuthRemoteDataSource,
 ) : AuthRepository {
 
+    override suspend fun callTestAuth(): Resource<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = authRemoteDataSource.callTestAuth()
+                Resource.Success(response.result.orEmpty())
+            } catch (e: Throwable) {
+                val message = e.message ?: "Error"
+                val baseError = BaseError(message = message)
+                Resource.Error(baseError)
+            }
+        }
+    }
+
     override suspend fun callLogin(loginRequest: LoginRequest): Resource<Unit> {
         return withContext(Dispatchers.IO) {
             try {
