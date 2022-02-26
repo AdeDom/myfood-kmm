@@ -8,5 +8,5 @@ import org.kodein.di.instance
 
 val repositoryModule = DI.Module(name = "repository") {
 
-    bindSingleton<AuthRepository> { AuthRepositoryImpl(instance()) }
+    bindSingleton<AuthRepository> { AuthRepositoryImpl(instance(), instance()) }
 }
