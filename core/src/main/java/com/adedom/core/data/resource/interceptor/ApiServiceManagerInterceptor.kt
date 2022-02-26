@@ -22,6 +22,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
 import okhttp3.Response
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.IOException
 
 class ApiServiceManagerInterceptor(
@@ -43,26 +45,31 @@ class ApiServiceManagerInterceptor(
                 verifyError(baseError, chain)
             }
         } else {
-            val jsonString = response.body?.string().orEmpty()
-            val baseResponse = jsonString.decodeApiServiceResponseFromString()
-            val baseError = baseResponse.error
-            return verifyError(baseError, chain)
+            try {
+                val jsonString = JSONObject(response.body?.string().orEmpty()).toString()
+                val baseResponse = jsonString.decodeApiServiceResponseFromString()
+                val baseError = baseResponse.error
+                return verifyError(baseError, chain)
+            } catch (e: JSONException) {
+                val messageString = "Error."
+                val baseError = BaseError(message = messageString)
+                val jsonString = Json.encodeToString(baseError)
+                throw ApiServiceManagerException(jsonString)
+            }
         }
     }
 
     private fun verifyError(baseError: BaseError?, chain: Interceptor.Chain): Response {
         return when (baseError?.code) {
             ErrorResponse.AccessTokenError.code -> {
-                runBlocking {
-                    val hasRefreshToken = appStore.refreshToken.isNullOrBlank()
-                    if (hasRefreshToken) {
-                        appStore.accessToken = ""
-                        appStore.refreshToken = ""
-                        val jsonString = Json.encodeToString(baseError)
-                        throw ApiServiceManagerException(jsonString)
-                    } else {
-                        callRefreshToken(chain)
-                    }
+                val hasRefreshToken = appStore.refreshToken.isNullOrBlank()
+                if (hasRefreshToken) {
+                    appStore.accessToken = ""
+                    appStore.refreshToken = ""
+                    val jsonString = Json.encodeToString(baseError)
+                    throw ApiServiceManagerException(jsonString)
+                } else {
+                    callRefreshToken(baseError, chain)
                 }
             }
             ErrorResponse.RefreshTokenError.code -> {
@@ -84,28 +91,38 @@ class ApiServiceManagerInterceptor(
         }
     }
 
-    private suspend fun callRefreshToken(chain: Interceptor.Chain): Response {
+    private fun callRefreshToken(baseError: BaseError?, chain: Interceptor.Chain): Response {
         val tokenRequest = TokenRequest(
             accessToken = appStore.accessToken,
             refreshToken = appStore.refreshToken,
         )
 
-        val tokenResponse: BaseResponse<TokenResponse> = getHttpClient()
-            .post("https://myfood-server.herokuapp.com/api/auth/refreshtoken") {
-                body = TextContent(
-                    text = Json.encodeToString(tokenRequest),
-                    contentType = ContentType.Application.Json
-                )
+        val tokenResponse: BaseResponse<TokenResponse>? = runBlocking {
+            try {
+                getHttpClient()
+                    .post("https://myfood-server.herokuapp.com/api/auth/refreshtoken") {
+                        body = TextContent(
+                            text = Json.encodeToString(tokenRequest),
+                            contentType = ContentType.Application.Json
+                        )
+                    }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                appStore.accessToken = ""
+                appStore.refreshToken = ""
+                val jsonString = Json.encodeToString(baseError)
+                throw ApiServiceManagerException(jsonString)
             }
+        }
 
-        return if (tokenResponse.status == ResponseKeyConstant.SUCCESS) {
+        return if (tokenResponse?.status == ResponseKeyConstant.SUCCESS) {
             val accessToken = tokenResponse.result?.accessToken
             val refreshToken = tokenResponse.result?.refreshToken
             appStore.accessToken = accessToken
             appStore.refreshToken = refreshToken
             intercept(chain)
         } else {
-            val baseError = tokenResponse.error
+            val baseError = tokenResponse?.error
             val jsonString = Json.encodeToString(baseError)
             throw ApiServiceManagerException(jsonString)
         }
