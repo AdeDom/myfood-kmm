@@ -8,6 +8,6 @@ import org.kodein.di.instance
 
 val dataSourceProviderModule = DI.Module(name = "data_source_provider") {
 
-    bindSingleton { ApiServiceManagerInterceptor() }
+    bindSingleton { ApiServiceManagerInterceptor(instance()) }
     bindSingleton { DataSourceProvider(instance(), instance()) }
 }

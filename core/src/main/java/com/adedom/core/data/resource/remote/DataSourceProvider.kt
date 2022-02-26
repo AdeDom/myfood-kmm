@@ -10,7 +10,7 @@ import io.ktor.client.features.json.serializer.*
 import io.ktor.client.features.logging.*
 
 class DataSourceProvider(
-    private val store: AppStore,
+    private val appStore: AppStore,
     private val apiServiceManagerInterceptor: ApiServiceManagerInterceptor,
 ) {
 
@@ -26,7 +26,7 @@ class DataSourceProvider(
                     addInterceptor { chain ->
                         val request = chain.request()
                             .newBuilder()
-                            .addHeader("my-food-key", store.accessToken.orEmpty())
+                            .addHeader("my-food-key", appStore.accessToken.orEmpty())
                             .build()
                         chain.proceed(request)
                     }
