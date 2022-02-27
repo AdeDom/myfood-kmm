@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.adedom.core.data.store.AppStore
 import com.adedom.core.di.*
+import com.adedom.myfood.data.db.MyFoodDatabaseDriverFactory
 import com.adedom.myfood.data.store.AppStoreImpl
-import com.adedom.myfood.di.databaseModule
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.android.x.androidXModule
@@ -32,5 +32,7 @@ class MainApplication : Application(), DIAware {
             instance<Context>().getSharedPreferences("AppStore", Context.MODE_PRIVATE)
         }
         bindSingleton<AppStore> { AppStoreImpl(instance()) }
+
+        bindSingleton { MyFoodDatabaseDriverFactory(instance()).createDriver() }
     }
 }
